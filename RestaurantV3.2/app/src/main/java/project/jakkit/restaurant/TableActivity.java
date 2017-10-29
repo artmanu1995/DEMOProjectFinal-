@@ -461,7 +461,7 @@ public class TableActivity extends ActionBarActivity {
                         break;
                     case 1:
                         stt_table = "0";
-                        checkOrderOffTable();
+                        synJSONgetListOrder();
                         break;
                 }   // switch
                 dialog.dismiss();
@@ -475,6 +475,61 @@ public class TableActivity extends ActionBarActivity {
         });
         AlertDialog objAlertDialog = objBuilder.create();
         objAlertDialog.show();
+    }
+    private void synJSONgetListOrder() {
+        //Setup New Policy
+        if (Build.VERSION.SDK_INT > 9) {
+            StrictMode.ThreadPolicy objPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+            StrictMode.setThreadPolicy(objPolicy);
+        }//Create InputStream
+        InputStream objInputStream = null;
+        String strJSON = "";
+        try {
+
+            HttpClient objHttpClient = new DefaultHttpClient();
+            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/count_list_order.php");
+            HttpResponse objHttpResponse = objHttpClient.execute(objHttpPost);
+            HttpEntity objHttpEntity = objHttpResponse.getEntity();
+            objInputStream = objHttpEntity.getContent();
+
+        } catch (Exception e) {
+            Log.d("oic", "InputStream ==> " + e.toString());
+        }
+        //Create strJSON
+        try {
+            BufferedReader objBufferedReader = new BufferedReader(new InputStreamReader(objInputStream, "UTF-8"));
+            StringBuilder objStringBuilder = new StringBuilder();
+            String strLine = null;
+            while ((strLine = objBufferedReader.readLine()) != null) {
+                objStringBuilder.append(strLine);
+            }   // while
+            objInputStream.close();
+            strJSON = objStringBuilder.toString();
+
+        } catch (Exception e) {
+            Log.d("oic", "strJSON ==> " + e.toString());
+        }
+        //UpData SQLite
+        try {
+            final JSONArray objJsonArray = new JSONArray(strJSON);
+            for (int j = 0; j < objJsonArray.length(); j++) {
+                JSONObject objJSONObject = objJsonArray.getJSONObject(j);
+                String strListOrder = objJSONObject.getString("COUNT(*)");
+                if (strCheckOrderOffTable.equals(strListOrder)){
+                    upDataTableToMySQL();
+                    Intent intento = new Intent(TableActivity.this, IndexMain.class);
+                    intento.putExtra("Officer", strOfficer);
+                    intento.putExtra("Table", strTable);
+                    intento.putExtra("IDofficer", strUserID);
+                    startActivity(intento);
+                }else{
+                    checkOrderOffTable();
+                }
+
+            }
+        } catch (Exception e) {
+            Log.d("oic", "Update ==> " + e.toString());
+        }
     }
     private void checkOrderOffTable() {
         if (Build.VERSION.SDK_INT > 9) {
@@ -517,16 +572,16 @@ public class TableActivity extends ActionBarActivity {
                 String strTableID = objJSONObject.getString("table_id");
                 String strCountOrder = objJSONObject.getString("count");
 
-                if (strTable.equals(strTableID) && strCheckOrderOffTable.equals(strCountOrder)){
+                if (strTable.equals(strTableID)){
+                    MyAlertDialog objMyAlertDialog = new MyAlertDialog();
+                    objMyAlertDialog.myDialog(TableActivity.this, "คำเตือน !", "โต๊ะ [" + strTable + "] ยังมี Order ที่รอทำรายการอยู่");
+                }else{
                     upDataTableToMySQL();
                     Intent intento = new Intent(TableActivity.this, IndexMain.class);
                     intento.putExtra("Officer", strOfficer);
                     intento.putExtra("Table", strTable);
                     intento.putExtra("IDofficer", strUserID);
                     startActivity(intento);
-                }else{
-                    MyAlertDialog objMyAlertDialog = new MyAlertDialog();
-                    objMyAlertDialog.myDialog(TableActivity.this, "คำเตือน !", "โต๊ะ [" + strTable + "] ยังมี Order ที่รอทำรายการอยู่");
                 }
             }
         } catch (Exception e) {
