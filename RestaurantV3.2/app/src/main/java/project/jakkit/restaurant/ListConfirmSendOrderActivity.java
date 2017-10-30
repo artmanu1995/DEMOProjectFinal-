@@ -32,10 +32,10 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 
 /**
- * Created by KHAMMA on 27/10/2017.
+ * Created by KHAMMA on 30/10/2017.
  */
 
-public class ListSendOrderActivity extends ActionBarActivity {
+public class ListConfirmSendOrderActivity extends ActionBarActivity {
     private ListView ListOrder;
 
     private ShowOrderTABLE objShowOrderTABLE;
@@ -51,8 +51,7 @@ public class ListSendOrderActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_order_send);
-
+        setContentView(R.layout.activity_order_cofirm);
         objShowOrderTABLE = new ShowOrderTABLE(this);
         objFoodTABLE = new FoodTABLE(this);
 
@@ -120,7 +119,7 @@ public class ListSendOrderActivity extends ActionBarActivity {
         final String[] strListPrice = objShowOrderTABLE.readAllShowPrice();
 
 
-        AdapterListOrder objMyAdapter = new AdapterListOrder(ListSendOrderActivity.this,strListOpenID,strListFoodID,strListFood,strListHot,strListAmount,strListPrice );
+        AdapterListOrder objMyAdapter = new AdapterListOrder(ListConfirmSendOrderActivity.this,strListOpenID,strListFoodID,strListFood,strListHot,strListAmount,strListPrice );
         ListOrder.setAdapter(objMyAdapter);
 
         //Click Active
@@ -133,10 +132,65 @@ public class ListSendOrderActivity extends ActionBarActivity {
                 strHotLevel = strListHot[position];
                 strAmount = strListAmount[position];
                 strPriceFood = strListPrice[position];
+                setClickListView();
             }   // event
         });
     }
+    private void setClickListView() {
 
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.food_order);
+        objBuilder.setTitle("ยืนยันการส่ง Order ถึงโต๊ะ");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                onPreExecute();
+                upDateOrderToMySQL();
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
+    }
+    public String upDateOrderToMySQL() {
+        String z="";
+        boolean isSuccess=false;
+
+        try {
+            Connection con = connectionClass.CONN();
+            if (con == null) {
+                z = "Please check internet connection";
+            } else {
+
+                String query = "UPDATE data_order SET sttCS_id = '0' WHERE order_openTable = '"+ strOpenID +"' ";
+                Statement stmt = con.createStatement();
+                stmt.executeUpdate(query);
+
+                Toast.makeText(getApplicationContext(), "บันทึกเรียบร้อย", Toast.LENGTH_SHORT).show();
+
+                clearAllOrder();
+                synJSONListOrder();
+
+                z = "insert into successfull";
+                isSuccess = true;
+            }
+        } catch (Exception ex) {
+            isSuccess = false;
+            z = "Exceptions" + ex;
+        }
+        return z;
+    }
+    protected void onPreExecute() {
+        progressDialog.setMessage("Loading...");
+        progressDialog.show();
+    }
     public void synJSONListOrder() {
         if (Build.VERSION.SDK_INT > 9) {
             StrictMode.ThreadPolicy objPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -148,7 +202,7 @@ public class ListSendOrderActivity extends ActionBarActivity {
         String strJSON = "";
         try {
             HttpClient objHttpClient = new DefaultHttpClient();
-            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order_consend_ok.php");
+            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order_consend.php");
             HttpResponse objHttpResponse = objHttpClient.execute(objHttpPost);
             HttpEntity objHttpEntity = objHttpResponse.getEntity();
             objInputStream = objHttpEntity.getContent();
@@ -202,21 +256,21 @@ public class ListSendOrderActivity extends ActionBarActivity {
         }
     }
     public void clickOrder(View view){
-        Intent intent = new Intent(ListSendOrderActivity.this, OrderActivity.class);
+        Intent intent = new Intent(ListConfirmSendOrderActivity.this, OrderActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         intent.putExtra("Table", strTable);
         startActivity(intent);
     }
     public void clickListOrder(View view){
-        Intent intent = new Intent(ListSendOrderActivity.this, ListOrderActivity.class);
+        Intent intent = new Intent(ListConfirmSendOrderActivity.this, ListOrderActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         intent.putExtra("Table", strTable);
         startActivity(intent);
     }
-    public void clickOrderOut(View view){
-        Intent intent = new Intent(ListSendOrderActivity.this, ListConfirmSendOrderActivity.class);
+    public void clickListConSendOrder(View view){
+        Intent intent = new Intent(ListConfirmSendOrderActivity.this, ListSendOrderActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         intent.putExtra("Table", strTable);
@@ -231,7 +285,7 @@ public class ListSendOrderActivity extends ActionBarActivity {
         objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Intent objIntent = new Intent(ListSendOrderActivity.this, MainActivity.class);
+                Intent objIntent = new Intent(ListConfirmSendOrderActivity.this, MainActivity.class);
                 startActivity(objIntent);
                 dialog.dismiss();
 
@@ -248,7 +302,7 @@ public class ListSendOrderActivity extends ActionBarActivity {
         objBuilder.show();
     }
     public void clickhome(View view){
-        Intent intent = new Intent(ListSendOrderActivity.this, IndexMain.class);
+        Intent intent = new Intent(ListConfirmSendOrderActivity.this, IndexMain.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         startActivity(intent);

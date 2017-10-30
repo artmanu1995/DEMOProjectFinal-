@@ -150,7 +150,6 @@ public class OrderActivity extends ActionBarActivity {
             public void onClick(DialogInterface dialog, int which) {
 
                 switch (which) {
-
                     case 0:
                         strAmount = "1";
                         break;
@@ -166,7 +165,6 @@ public class OrderActivity extends ActionBarActivity {
                     case 4:
                         strAmount = "5";
                         break;
-
                 }   // switch
                 dialog.dismiss();
 
@@ -256,7 +254,7 @@ public class OrderActivity extends ActionBarActivity {
         try {
 
             HttpClient objHttpClient = new DefaultHttpClient();
-            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/count_listorder_table.php");
+            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/count_list_order.php");
             HttpResponse objHttpResponse = objHttpClient.execute(objHttpPost);
             HttpEntity objHttpEntity = objHttpResponse.getEntity();
             objInputStream = objHttpEntity.getContent();
@@ -282,13 +280,14 @@ public class OrderActivity extends ActionBarActivity {
             final JSONArray objJsonArray = new JSONArray(strJSON);
             for (int j = 0; j < objJsonArray.length(); j++) {
                 JSONObject objJSONObject = objJsonArray.getJSONObject(j);
-                String strTableID = objJSONObject.getString("table_id");
-                String strCountOrder = objJSONObject.getString("count");
-                if (strTable.equals(strTableID) && strCheckOrder.equals(strCountOrder)){
+                String strCountOrder = objJSONObject.getString("COUNT(*)");
+                if (strCheckOrder.equals(strCountOrder)){
                     upOrderToMySQL();
                     onPreExecute();
                 }else {
-                    synCheckDoubleOrder();
+                    upOrderToMySQL();
+                    onPreExecute();
+    //                synCheckDoubleOrder();
                 }
 
             }
@@ -338,13 +337,6 @@ public class OrderActivity extends ActionBarActivity {
                 strDoubleFoodID = objJSONObject.getString("food_id");
                 strDoubleAmount = objJSONObject.getString("order_amount");
                 strDoubleHot = objJSONObject.getString("listO_hot");
-
-                Log.d("CheckDoubleOrder", "CheckTableData ==> " + strDoubleTableID);
-                Log.d("CheckDoubleOrder", "CheckTable ==> " + strTable);
-                Log.d("CheckDoubleOrder", "CheckFoodIDData ==> " + strDoubleFoodID);
-                Log.d("CheckDoubleOrder", "CheckFoodID ==> " + strNumFood);
-                Log.d("CheckDoubleOrder", "CheckHotData ==> " + strDoubleHot);
-                Log.d("CheckDoubleOrder", "CheckHot ==> " + strHotLevel);
 
                 if (strDoubleTableID.equals(strTable) && strDoubleFoodID.equals(strNumFood) && strDoubleHot.equals(strHotLevel)){
                     upOrderDoubleToMySQL();
@@ -400,8 +392,8 @@ public class OrderActivity extends ActionBarActivity {
                         Log.d("upOrderToMySQL", "DATE ==> " + strDate);
                         Log.d("upOrderToMySQL", "Amount ==> " + strAmount);
 
-                    String query = "insert into data_listorder values('" + intListO + "','" + strNumFood + "','" + strHotLevel + "','" + strTable + "','" + strUserID + "','" + strDate + "')";
-                    String query2 = "insert into data_order values(NULL,'" + intListO + "','" + strAmount + "',' 1 ',' 1 ')";
+                    String query = "insert into data_listorder values('" + intListO + "','" + strNumFood + "','" + strHotLevel + "','" + strTable + "','" + strDate + "','" + strUserID + "')";
+                    String query2 = "insert into data_order values(NULL,'" + intListO + "','" + strAmount + "','1','1','1')";
 
                     Statement stmt = con.createStatement();
                     stmt.executeUpdate(query);
@@ -494,8 +486,7 @@ public class OrderActivity extends ActionBarActivity {
 
         } catch (Exception e) {
             Log.d("oic", "InputStream ==> " + e.toString());
-        }
-        //Create strJSON
+        }//Create strJSON
         try {
             BufferedReader objBufferedReader = new BufferedReader(new InputStreamReader(objInputStream, "UTF-8"));
             StringBuilder objStringBuilder = new StringBuilder();
@@ -524,11 +515,39 @@ public class OrderActivity extends ActionBarActivity {
         }
     }
     public void clicklogout(View view){
-        Intent intent = new Intent(OrderActivity.this, MainActivity.class);
-        startActivity(intent);
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.danger);
+        objBuilder.setTitle("คำเตือน !");
+        objBuilder.setMessage("[" + strOfficer + "] คุณต้องการออกจากระบบร้านอาหาร");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent objIntent = new Intent(OrderActivity.this, MainActivity.class);
+                startActivity(objIntent);
+                dialog.dismiss();
+
+                finish();
+            }
+        });
+        objBuilder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
     }
     public void clickListOrder(View view){
         Intent intent = new Intent(OrderActivity.this, ListOrderActivity.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
+        intent.putExtra("Table", strTable);
+        startActivity(intent);
+    }
+    public void clickListOrderOut(View view){
+        Intent intent = new Intent(OrderActivity.this, ListConfirmSendOrderActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         intent.putExtra("Table", strTable);
@@ -539,6 +558,12 @@ public class OrderActivity extends ActionBarActivity {
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         intent.putExtra("Table", strTable);
+        startActivity(intent);
+    }
+    public void clickhome(View view){
+        Intent intent = new Intent(OrderActivity.this, IndexMain.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
         startActivity(intent);
     }
     @Override

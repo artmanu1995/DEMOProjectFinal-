@@ -40,15 +40,9 @@ import java.text.SimpleDateFormat;
 public class ListCookActivity extends ActionBarActivity {
     private TextView txtShowOfficer;
     private ListView ListCook;
-    private ShowOrderTABLE objShowOrderTABLE;
     private OrderTABLE objOrderTABLE;
-    private ListOrderTABLE objListOrderTABLE;
-    private FoodTABLE objFoodTABLE;
-    private String strSttSendOK = "0";
-    private String strOfficer, strUserID, strDate;
-
-    private String strTableID , strFoodID, strNameFood, strHotLevel, strAmount, strPriceFood,strOpenID;
-    private String strDefaultSttSend = "1";
+    private String strOfficer, strUserID, strDate, strTableID , strFoodID, strNameFood,
+            strHotLevel, strAmount, strPriceFood,strOpenID;
 
     ConnectionClass connectionClass;
     ProgressDialog progressDialog;
@@ -59,13 +53,12 @@ public class ListCookActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cook_list);
 
-        objShowOrderTABLE = new ShowOrderTABLE(this);
-        objFoodTABLE = new FoodTABLE(this);
         objOrderTABLE = new OrderTABLE(this);
-        objListOrderTABLE = new ListOrderTABLE(this);
 
         connectionClass = new ConnectionClass();
         progressDialog = new ProgressDialog(this);
+
+        clearAllOrder();
 
         bindWidget();
 
@@ -75,7 +68,6 @@ public class ListCookActivity extends ActionBarActivity {
         getDate();
 
         createListViewCook();
-
     }
     private void showOfficer() {
         strOfficer = getIntent().getExtras().getString("Officer");
@@ -95,7 +87,7 @@ public class ListCookActivity extends ActionBarActivity {
                             @Override
                             public void run() {
                                 long date = System.currentTimeMillis();
-                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                                 strDate = sdf.format(date);
                             }
                         });
@@ -115,7 +107,7 @@ public class ListCookActivity extends ActionBarActivity {
         String strJSON = "";
         try {
             HttpClient objHttpClient = new DefaultHttpClient();
-            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order.php");
+            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order_cook.php");
             HttpResponse objHttpResponse = objHttpClient.execute(objHttpPost);
             HttpEntity objHttpEntity = objHttpResponse.getEntity();
             objInputStream = objHttpEntity.getContent();
@@ -143,23 +135,12 @@ public class ListCookActivity extends ActionBarActivity {
                 JSONObject objJSONObject = objJsonArray.getJSONObject(i);
                 String strOpenID = objJSONObject.getString("order_openTable");
                 String strTableID =objJSONObject.getString("table_id");
-                String strFoodID = objJSONObject.getString("food_id");
-                String strAmount = objJSONObject.getString("listO_amount");
+                String strFoodName = objJSONObject.getString("food_name");
+                String strAmount = objJSONObject.getString("order_amount");
                 String strHotLevel = objJSONObject.getString("listO_hot");
                 Integer intAmount = Integer.parseInt(strAmount);
 
- /*               Log.d("addsh", "OpenTableID ==> " + strOpenID);
-                Log.d("addsh", "TableID ==> " + strTableID);
-                Log.d("addsh", "FoodID ==> " + strFoodID);
-                Log.d("addsh", "Hot ==> " + strHotLevel);
-                Log.d("addsh", "SttSend ==> " + strSttSend);
-                Log.d("addsh", "Amount ==> " + intAmount); */
-
-                    String strSynResult[] = objFoodTABLE.searchFood(strFoodID);
-                    strFoodID = strSynResult[0];
-                    String strNameFood = strSynResult[1];
-
-                    long AddValue = objOrderTABLE.addValueToOrder(strOpenID, strTableID, strNameFood, strHotLevel, intAmount);
+                    long AddValue = objOrderTABLE.addValueToOrder(strOpenID, strTableID, strFoodName, strHotLevel, intAmount);
                 }
             } catch (Exception e) {
             Log.d("oic", "Update ==> " + e.toString());
@@ -242,7 +223,12 @@ public class ListCookActivity extends ActionBarActivity {
         }
         return z;
     }
-
+    public void clickhome(View view){
+        Intent intent = new Intent(ListCookActivity.this, IndexMain.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
+        startActivity(intent);
+    }
     public void ClickCO(View view) {
         Intent intent = new Intent(ListCookActivity.this, ListCookOutActivity.class);
         intent.putExtra("Officer", strOfficer);
@@ -250,8 +236,29 @@ public class ListCookActivity extends ActionBarActivity {
         startActivity(intent);
     }
     public void clicklogout(View view){
-        Intent intent = new Intent(ListCookActivity.this, MainActivity.class);
-        startActivity(intent);
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.danger);
+        objBuilder.setTitle("คำเตือน !");
+        objBuilder.setMessage("[" + strOfficer + "] คุณต้องการออกจากระบบร้านอาหาร");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent objIntent = new Intent(ListCookActivity.this, MainActivity.class);
+                startActivity(objIntent);
+                dialog.dismiss();
+
+                finish();
+            }
+        });
+        objBuilder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
     }
     protected void onPreExecute() {
         progressDialog.setMessage("Loading...");

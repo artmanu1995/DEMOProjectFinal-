@@ -37,6 +37,14 @@
             android:label="RestaurantV3 -List Order" >
         </activity>
         <activity
+            android:name="project.jakkit.restaurant.ListConfirmSendOrderActivity"
+            android:label="RestaurantV3 -List Confirm Order" >
+        </activity>
+        <activity
+            android:name="project.jakkit.restaurant.ListSendOrderActivity"
+            android:label="RestaurantV3 -List Send Order" >
+        </activity>
+        <activity
             android:name="project.jakkit.restaurant.ListCookActivity"
             android:label="RestaurantV3 -List Order Cook" >
         </activity>

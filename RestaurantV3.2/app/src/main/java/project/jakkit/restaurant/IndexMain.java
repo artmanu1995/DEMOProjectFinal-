@@ -1,5 +1,7 @@
 package project.jakkit.restaurant;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -80,7 +82,28 @@ public class IndexMain extends ActionBarActivity {
         startActivity(intent);
     }
     public void clicklogout(View view){
-        Intent intent = new Intent(IndexMain.this, MainActivity.class);
-        startActivity(intent);
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.danger);
+        objBuilder.setTitle("คำเตือน !");
+        objBuilder.setMessage("[" + strOfficer + "] คุณต้องการออกจากระบบร้านอาหาร");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent objIntent = new Intent(IndexMain.this, MainActivity.class);
+                startActivity(objIntent);
+                dialog.dismiss();
+
+                finish();
+            }
+        });
+        objBuilder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
     }
 }

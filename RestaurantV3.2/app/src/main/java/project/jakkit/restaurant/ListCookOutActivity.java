@@ -1,7 +1,10 @@
 package project.jakkit.restaurant;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -31,17 +34,12 @@ import java.text.SimpleDateFormat;
 
 public class ListCookOutActivity extends ActionBarActivity {
 
-    private ShowOrderTABLE objShowOrderTABLE;
-    private OrderTABLE objOrderTABLE;
     private ListOrderTABLE objListOrderTABLE;
-    private FoodTABLE objFoodTABLE;
-
     private TextView txtShowOfficer;
     private ListView ListCookOut;
 
-    private String strTableID, strNameFood, strHotLevel, strAmount, strOpenID;
-    private String strOfficer, strUserID, strDate;
-    private String strSttSendOK = "0", strDefaultSttPay = "1";
+    private String strTableID, strNameFood, strHotLevel, strAmount, strOpenID, strOfficer, strUserID,
+            strDate;
 
     ConnectionClass connectionClass;
     ProgressDialog progressDialog;
@@ -49,13 +47,10 @@ public class ListCookOutActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cookout_list);
 
-        objShowOrderTABLE = new ShowOrderTABLE(this);
-        objFoodTABLE = new FoodTABLE(this);
-        objOrderTABLE = new OrderTABLE(this);
         objListOrderTABLE = new ListOrderTABLE(this);
-
         connectionClass = new ConnectionClass();
         progressDialog = new ProgressDialog(this);
+        clearAllOrder();
 
         bindWidget();
         synJSONListOrder();
@@ -64,7 +59,11 @@ public class ListCookOutActivity extends ActionBarActivity {
         getDate();
 
         createListViewCook();
+    }
 
+    private void clearAllOrder() {
+        SQLiteDatabase objSqLiteDatabase = openOrCreateDatabase("restaurantV4.db", MODE_PRIVATE, null);
+        objSqLiteDatabase.delete("listoTABLE",null, null);
     }
     private void showOfficer() {
         strOfficer = getIntent().getExtras().getString("Officer");
@@ -84,7 +83,7 @@ public class ListCookOutActivity extends ActionBarActivity {
                             @Override
                             public void run() {
                                 long date = System.currentTimeMillis();
-                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
                                 strDate = sdf.format(date);
                             }
                         });
@@ -100,20 +99,18 @@ public class ListCookOutActivity extends ActionBarActivity {
             StrictMode.ThreadPolicy objPolicy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
             StrictMode.setThreadPolicy(objPolicy);
         }
-
         InputStream objInputStream = null;
         String strJSON = "";
         try {
             HttpClient objHttpClient = new DefaultHttpClient();
-            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order_out.php");
+            HttpPost objHttpPost = new HttpPost("http://192.168.1.90/join_order_cookout.php");
             HttpResponse objHttpResponse = objHttpClient.execute(objHttpPost);
             HttpEntity objHttpEntity = objHttpResponse.getEntity();
             objInputStream = objHttpEntity.getContent();
 
         } catch (Exception e) {
             Log.d("oic", "InputStream ==> " + e.toString());
-        }
-        //Create strJSON
+        }//Create strJSON
         try {
             BufferedReader objBufferedReader = new BufferedReader(new InputStreamReader(objInputStream, "UTF-8"));
             StringBuilder objStringBuilder = new StringBuilder();
@@ -134,34 +131,17 @@ public class ListCookOutActivity extends ActionBarActivity {
                 JSONObject objJSONObject = objJsonArray.getJSONObject(i);
                 String strOpenID = objJSONObject.getString("order_openTable");
                 String strTableID =objJSONObject.getString("table_id");
-                String strFoodID = objJSONObject.getString("food_id");
-                String strAmount = objJSONObject.getString("listO_amount");
+                String strFoodName = objJSONObject.getString("food_name");
+                String strAmount = objJSONObject.getString("order_amount");
                 String strHotLevel = objJSONObject.getString("listO_hot");
-                String strSttSend = objJSONObject.getString("sttSO_id");
-                String strSttPay = objJSONObject.getString("sttPay_id");
                 Integer intAmount = Integer.parseInt(strAmount);
 
-          /*      Log.d("sho", "OpenTableID ==> " + strOpenID);
-                Log.d("sho", "TableID ==> " + strTableID);
-                Log.d("sho", "FoodID ==> " + strFoodID);
-                Log.d("sho", "Hot ==> " + strHotLevel);
-                Log.d("sho", "SttSend ==> " + strSttSend);
-                Log.d("sho", "SttPay ==> " + strSttPay);
-                Log.d("sho", "Amount ==> " + intAmount); */
-
-                if (strSttSend.equals(strSttSendOK) && strSttPay.equals(strDefaultSttPay)) {
-                    String strSynFoodResult[] = objFoodTABLE.searchFood(strFoodID);
-                    strFoodID = strSynFoodResult[0];
-                    String strNameFood = strSynFoodResult[1];
-
-                    long AddValue = objListOrderTABLE.addValueToListOrder(strOpenID, strTableID, strNameFood, strHotLevel, intAmount);
-                }
+                    long AddValue = objListOrderTABLE.addValueToListOrder(strOpenID, strTableID, strFoodName, strHotLevel, intAmount);
             }
         } catch (Exception e) {
             Log.d("oic", "Update ==> " + e.toString());
         }
     }
-
     private void createListViewCook() {
         final String[] strListOpenID = objListOrderTABLE.readAllListLID();
         final String[] strListTableID = objListOrderTABLE.readAllListTableID();
@@ -169,7 +149,7 @@ public class ListCookOutActivity extends ActionBarActivity {
         final String[] strListHot = objListOrderTABLE.readAllListHot();
         final String[] strListAmount = objListOrderTABLE.readAllListAmount();
 
-        AdapterListCookOut objMyAdapter = new AdapterListCookOut(ListCookOutActivity.this, strListOpenID, strListTableID, strListFood, strListHot, strListAmount);
+        AdapterListCook objMyAdapter = new AdapterListCook(ListCookOutActivity.this, strListOpenID, strListTableID, strListFood, strListHot, strListAmount);
         ListCookOut.setAdapter(objMyAdapter);
 
         //Click Active
@@ -186,16 +166,43 @@ public class ListCookOutActivity extends ActionBarActivity {
     }
     private void bindWidget() {
         ListCookOut = (ListView)findViewById(R.id.listCookOut);
-        txtShowOfficer= (TextView)findViewById(R.id.txtShowOfficer);
+        txtShowOfficer = (TextView)findViewById(R.id.txtShowOfficer);
     }
-    public void ClickC(View view) {
+    public void ClickO(View view) {
         Intent intent = new Intent(ListCookOutActivity.this, ListCookActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
         startActivity(intent);
     }
     public void clicklogout(View view){
-        Intent intent = new Intent(ListCookOutActivity.this, MainActivity.class);
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.danger);
+        objBuilder.setTitle("คำเตือน !");
+        objBuilder.setMessage("[" + strOfficer + "] คุณต้องการออกจากระบบร้านอาหาร");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent objIntent = new Intent(ListCookOutActivity.this, MainActivity.class);
+                startActivity(objIntent);
+                dialog.dismiss();
+
+                finish();
+            }
+        });
+        objBuilder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
+    }
+    public void clickhome(View view){
+        Intent intent = new Intent(ListCookOutActivity.this, IndexMain.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
         startActivity(intent);
     }
 }

@@ -41,8 +41,6 @@ public class ListOrderActivity extends ActionBarActivity {
     private ListView ListOrder;
 
     private ShowOrderTABLE objShowOrderTABLE;
-    private OrderTABLE objOrderTABLE;
-    private ListOrderTABLE objListOrderTABLE;
     private FoodTABLE objFoodTABLE;
     private TextView txtShowTable, txtShowOfficer;
     private String strTable, strFoodID, strNameFood, strHotLevel, strAmount, strPriceFood,
@@ -58,8 +56,6 @@ public class ListOrderActivity extends ActionBarActivity {
 
         objShowOrderTABLE = new ShowOrderTABLE(this);
         objFoodTABLE = new FoodTABLE(this);
-        objOrderTABLE = new OrderTABLE(this);
-        objListOrderTABLE = new ListOrderTABLE(this);
 
         connectionClass = new ConnectionClass();
         progressDialog = new ProgressDialog(this);
@@ -79,7 +75,6 @@ public class ListOrderActivity extends ActionBarActivity {
 
     private void bindWidget() {
         txtShowTable = (TextView) findViewById(R.id.txtShowTable);
-//        txtShowTotalPrice = (TextView) findViewById(R.id.txtShowTotal);
         ListOrder = (ListView)findViewById(R.id.listOrder);
         txtShowOfficer = (TextView) findViewById(R.id.txtShowOfficer);
     }
@@ -130,7 +125,7 @@ public class ListOrderActivity extends ActionBarActivity {
         final String[] strListPrice = objShowOrderTABLE.readAllShowPrice();
 
 
-        AdapterListOrder1 objMyAdapter = new AdapterListOrder1(ListOrderActivity.this,strListOpenID,strListFoodID,strListFood,strListHot,strListAmount,strListPrice );
+        AdapterListOrder objMyAdapter = new AdapterListOrder(ListOrderActivity.this,strListOpenID,strListFoodID,strListFood,strListHot,strListAmount,strListPrice );
         ListOrder.setAdapter(objMyAdapter);
 
         //Click Active
@@ -149,7 +144,6 @@ public class ListOrderActivity extends ActionBarActivity {
         });
     }
     private void deleteOrder() {
-
         AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
         objBuilder.setIcon(R.drawable.danger);
         objBuilder.setTitle("ยกเลิก Order");
@@ -159,7 +153,6 @@ public class ListOrderActivity extends ActionBarActivity {
             public void onClick(DialogInterface dialog, int which) {
                 onPreExecute();
  //               deleteOrderToMySQL();
-
                 dialog.dismiss();
             }
         });
@@ -330,6 +323,13 @@ public class ListOrderActivity extends ActionBarActivity {
         startActivity(intent);
     }
     public void clickListSendOrder(View view){
+        Intent intent = new Intent(ListOrderActivity.this, ListConfirmSendOrderActivity.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
+        intent.putExtra("Table", strTable);
+        startActivity(intent);
+    }
+    public void clickListConSendOrder(View view){
         Intent intent = new Intent(ListOrderActivity.this, ListSendOrderActivity.class);
         intent.putExtra("Officer", strOfficer);
         intent.putExtra("IDofficer", strUserID);
@@ -337,7 +337,34 @@ public class ListOrderActivity extends ActionBarActivity {
         startActivity(intent);
     }
     public void clicklogout(View view){
-        Intent intent = new Intent(ListOrderActivity.this, MainActivity.class);
+        AlertDialog.Builder objBuilder = new AlertDialog.Builder(this);
+        objBuilder.setIcon(R.drawable.danger);
+        objBuilder.setTitle("คำเตือน !");
+        objBuilder.setMessage("[" + strOfficer + "] คุณต้องการออกจากระบบร้านอาหาร");
+        objBuilder.setCancelable(false);
+        objBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent objIntent = new Intent(ListOrderActivity.this, MainActivity.class);
+                startActivity(objIntent);
+                dialog.dismiss();
+
+                finish();
+            }
+        });
+        objBuilder.setNegativeButton("Cancle", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+        objBuilder.show();
+    }
+    public void clickhome(View view){
+        Intent intent = new Intent(ListOrderActivity.this, IndexMain.class);
+        intent.putExtra("Officer", strOfficer);
+        intent.putExtra("IDofficer", strUserID);
         startActivity(intent);
     }
 }

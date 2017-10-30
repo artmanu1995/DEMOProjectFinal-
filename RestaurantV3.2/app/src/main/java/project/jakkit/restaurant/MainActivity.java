@@ -101,6 +101,8 @@ public class MainActivity extends ActionBarActivity {
             checkPassword();
 
         } catch (Exception e) {
+            edtUser.setText("");
+            edtPassword.setText("");
             MyAlertDialog objMyAlertDialog = new MyAlertDialog();
             objMyAlertDialog.myDialog(MainActivity.this, "Username ไม่ถูกต้อง !", "("+ strUserChoose +") Username นี้ไม่มีในฐานข้อมูล");
         }
@@ -113,7 +115,7 @@ public class MainActivity extends ActionBarActivity {
             welcome();
 
         } else {
-
+            edtPassword.setText("");
             MyAlertDialog objMyAlertDialog = new MyAlertDialog();
             objMyAlertDialog.myDialog(MainActivity.this, "Password ไม่ถูกต้อง !", "กรุณากรอก Password อีกครั้ง");
 
